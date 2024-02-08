@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fstories_widget/storyCard.dart';
 import 'package:fstories_widget/utils.dart';
 
-class IndexModel extends ChangeNotifier  {
+class IndexModel extends ChangeNotifier {
   IndexModel({
     required this.storyIndex,
     required this.storyLength,
@@ -10,6 +10,7 @@ class IndexModel extends ChangeNotifier  {
     required this.pageLength,
     required this.onAnimatePage,
     required this.safeLimit,
+    required this.cardId,
     this.isEnded = false,
   });
 
@@ -20,6 +21,7 @@ class IndexModel extends ChangeNotifier  {
   final void Function(int, AnimationController) onAnimatePage;
   bool isEnded;
   int safeLimit;
+  String cardId;
 
   get currentStoryIndex => storyIndex >= storyLimit ? storyLimit : storyIndex;
 
@@ -29,8 +31,6 @@ class IndexModel extends ChangeNotifier  {
 
   get pageLimit => pageLength - 1;
 
-
-
   decrementStoryIndex() {
     if (storyIndex == 0) {
       return false;
@@ -39,7 +39,6 @@ class IndexModel extends ChangeNotifier  {
     notifyListeners();
     return false;
   }
-
 
   incrementStoryIndex() {
     if (storyIndex == storyLimit) {
@@ -51,34 +50,24 @@ class IndexModel extends ChangeNotifier  {
     return false;
   }
 
-
-  markCardAsWatched() {
-
-    moveWatchedController.value = MoveWatchedState.watched;
-
+  markCardAsWatched(String id) {
+    moveWatchedController.value = id;
   }
-  markCardAsUnWatched() {
 
-    moveWatchedController.value = MoveWatchedState.unwatched;
-
+  markCardAsUnWatched(String id) {
+    moveWatchedController.value = id;
   }
 
   openNextPage(
     VoidCallback? callback,
-      controller,
+    controller,
+    String id,
   ) {
-
-    if (safeLimit == 0 || pageIndex == pageLimit ) {
-      gkey.currentState?.currentPage = pageIndex;
-      moveWatchedController.value = MoveWatchedState.watched;
+    if (safeLimit == 0 || pageIndex == pageLimit) {
+      moveWatchedController.value = id;
       onPageLimitReached(callback);
-
     }
 
-    gkey.currentState?.pageLength -= 1;
-
-
-    gkey.currentState?.currentPage = pageIndex;
     pageIndex += 1;
     onAnimatePage(pageIndex, controller);
   }
@@ -122,4 +111,3 @@ class IndexNotifierProvider extends InheritedNotifier<IndexModel> {
     return notifier != oldWidget.notifier;
   }
 }
-

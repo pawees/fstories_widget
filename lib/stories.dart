@@ -11,15 +11,15 @@ typedef StoryItemBuilder = Widget Function(
 
 class StoriesView extends StatefulWidget {
   const StoriesView(
-      {
-      required this.onPageLimit,
+      {required this.onPageLimit,
       this.isWatchedController,
       required this.storyLength,
       required this.pageIndex,
       required this.pageLength,
+      required this.cardContent,
+      required this.cardId,
       Key? key})
       : super(key: key);
-
 
   /// Functions like "Navigator.pop(context)" is expected.
   final VoidCallback? onPageLimit;
@@ -30,6 +30,8 @@ class StoriesView extends StatefulWidget {
   final int storyLength;
   final int pageIndex;
   final int pageLength;
+  final List<String> cardContent;
+  final String cardId;
 
   @override
   State<StoriesView> createState() => _StoriesViewState();
@@ -58,16 +60,17 @@ class _StoriesViewState extends State<StoriesView> {
   Widget build(BuildContext context) {
     return PageView.builder(
         controller: pageController,
-        itemCount: widget.pageLength,
+        itemCount: widget.storyLength,
         itemBuilder: (context, index) {
           return Stack(
             children: [
               StoriesNotifierProvider(
+                cardId: widget.cardId,
                 isCurrentPage: currentPageValue == index,
-                contentBuilder: gkey.currentState?.content[index] ?? [''],
+                contentBuilder: widget.cardContent,
                 pageIndex: index,
                 onPageLimit: widget.onPageLimit,
-                storyLength: gkey.currentState?.storiesLength[index] ?? 0,
+                storyLength: widget.storyLength,
                 pageLength: widget.pageLength,
                 onAnimatePage: (index, controller) {
                   pageController?.animateToPage(
@@ -92,6 +95,7 @@ class StoriesNotifierProvider extends StatelessWidget {
       required this.onPageLimit,
       required this.storyLength,
       required this.pageLength,
+      required this.cardId,
       this.isWatchedController,
       Key? key})
       : super(key: key);
@@ -104,16 +108,18 @@ class StoriesNotifierProvider extends StatelessWidget {
   final int pageIndex;
   final int storyLength;
   final bool isCurrentPage;
+  final String cardId;
 
   @override
   Widget build(BuildContext context) {
     IndexModel _model = IndexModel(
-      safeLimit: gkey.currentState?.pageLength ?? 0,
+      safeLimit: pageLength,
       storyIndex: 0,
       storyLength: storyLength,
       pageIndex: pageIndex,
       pageLength: pageLength,
       onAnimatePage: onAnimatePage,
+      cardId: cardId,
     );
     return IndexNotifierProvider(
       model: _model,
@@ -159,10 +165,11 @@ class _StoriesViewBuilderState extends State<_StoriesViewBuilder>
   @override
   void initState() {
     super.initState();
+    final String card_id = IndexNotifierProvider.read(context)?.cardId ?? '0';
 
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 2800),
+      duration: const Duration(milliseconds: 2800),
     )..addStatusListener((status) {
         if (status == AnimationStatus.completed) {
           bool isNextPage =
@@ -171,6 +178,7 @@ class _StoriesViewBuilderState extends State<_StoriesViewBuilder>
             IndexNotifierProvider.read(context)?.openNextPage(
               widget.onPageLimit,
               _controller,
+              card_id,
             );
           }
 
@@ -181,7 +189,6 @@ class _StoriesViewBuilderState extends State<_StoriesViewBuilder>
 
   @override
   Widget build(BuildContext context) {
-
     final int currentStoryIndex =
         IndexNotifierProvider.watch(context)?.currentStoryIndex ?? 0;
 
@@ -190,14 +197,12 @@ class _StoriesViewBuilderState extends State<_StoriesViewBuilder>
         color: Colors.black,
         child: Stack(
           children: [
-
             ///image
             Positioned.fill(
               child: Image.asset(
                 widget.contentBuilder[currentStoryIndex],
               ),
             ),
-
 
             ///indicator
             Positioned(
@@ -225,12 +230,12 @@ class _StoriesViewBuilderState extends State<_StoriesViewBuilder>
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
-                    onPressed: () {
-                      _controller.stop();
-                      Navigator.pop(context);
-                      gkey.currentState?.firstInitCards = gkey.currentState?.newCards ?? [];
-                    },
-                    icon: Icon(Icons.close_rounded)),
+                  onPressed: () {
+                    _controller.stop();
+                    Navigator.pop(context);
+                  },
+                  icon: const Icon(Icons.close_rounded),
+                ),
               ),
             ),
           ],
@@ -258,20 +263,19 @@ class _Gestures extends StatelessWidget {
             child: GestureDetector(
               onTap: () {
                 animationController!.forward(from: 0);
-               IndexNotifierProvider.read(context)?.decrementStoryIndex();
-
+                IndexNotifierProvider.read(context)?.decrementStoryIndex();
               },
               onTapDown: (_) {
                 animationController!.stop();
               },
               onTapUp: (_) {
-                  animationController!.forward();
+                animationController!.forward();
               },
               onLongPress: () {
                 animationController!.stop();
               },
               onLongPressUp: () {
-                  animationController!.forward();
+                animationController!.forward();
               },
             ),
           ),
@@ -288,13 +292,13 @@ class _Gestures extends StatelessWidget {
                 animationController!.stop();
               },
               onTapUp: (_) {
-                  animationController!.forward();
+                animationController!.forward();
               },
               onLongPress: () {
                 animationController!.stop();
               },
               onLongPressUp: () {
-                  animationController!.forward();
+                animationController!.forward();
               },
             ),
           ),
@@ -323,6 +327,8 @@ class _IndicatorsRowState extends State<_IndicatorsRow>
   late Animation<double> indicatorAnimation;
   late int storyLength;
   late int currentStoryIndex;
+  late String card_id;
+  //todo cardObject
 
   @override
   void initState() {
@@ -338,15 +344,17 @@ class _IndicatorsRowState extends State<_IndicatorsRow>
   @override
   void didChangeDependencies() {
     storyLength = IndexNotifierProvider.read(context)?.storyLimit ?? 0;
+    card_id = IndexNotifierProvider.read(context)?.cardId ?? '0';
 
     if (!widget.isCurrentPage) {
       widget.animationController.stop();
-      IndexNotifierProvider.read(context)?.markCardAsWatched();
+      IndexNotifierProvider.read(context)
+          ?.markCardAsWatched(card_id); //todo throw card.id
     }
 
     if (widget.isCurrentPage) {
       widget.animationController.forward();
-      IndexNotifierProvider.read(context)?.markCardAsUnWatched();
+      IndexNotifierProvider.read(context)?.markCardAsUnWatched(card_id);
     }
     super.didChangeDependencies();
   }
@@ -354,10 +362,10 @@ class _IndicatorsRowState extends State<_IndicatorsRow>
   @override
   void didUpdateWidget(covariant _IndicatorsRow oldWidget) {
     super.didUpdateWidget(oldWidget);
-
+    //todo delete this method
     if (widget.isCurrentPage) {
       widget.animationController.forward();
-      IndexNotifierProvider.read(context)?.markCardAsUnWatched();
+      IndexNotifierProvider.read(context)?.markCardAsUnWatched(card_id);
     }
   }
 
@@ -398,7 +406,7 @@ class _Indicator extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 8.0 / 2),
+        margin: const EdgeInsets.symmetric(horizontal: 8.0 / 2),
         height: 3,
         decoration: BoxDecoration(
             color: Colors.grey, borderRadius: BorderRadius.circular(2.0)),
@@ -406,7 +414,7 @@ class _Indicator extends StatelessWidget {
           alignment: Alignment.centerLeft,
           widthFactor: progress,
           child: Container(
-            color: Color(0xffffffff),
+            color: const Color(0xffffffff),
           ),
         ),
       ),

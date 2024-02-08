@@ -85,6 +85,7 @@ class BorderDecoration {
 class StoriesPage {
   /// Name of the story circle
   String? name;
+  String id;
 
   final BorderDecoration? borderDecoration;
 
@@ -92,14 +93,27 @@ class StoriesPage {
 
   final Widget cardDecoration;
 
-  MoveWatchedState state = MoveWatchedState.unwatched;
+  MoveWatchedState state;
+
+  int get storiesLength => content.length;
 
   /// Add a story
   StoriesPage({
     this.borderDecoration = const BorderDecoration.standart(),
     this.name,
+    required this.id,
     required this.content,
     required this.cardDecoration,
     this.state = MoveWatchedState.unwatched,
   });
+}
+
+
+StoriesPage? findCardById(String id, cards) {
+  for (var card in cards) {
+    if (card.id == id) {
+      return card;
+    }
+  }
+  return null; // Если элемент с указанным id не найден
 }

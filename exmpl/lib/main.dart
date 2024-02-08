@@ -33,6 +33,7 @@ class Home extends StatelessWidget {
       cards: [
         StoriesPage(
           name: 'man mustaches',
+          id: '4532',
           borderDecoration: BorderDecoration(
             color: Colors.orange.withOpacity(0.5),
             strokeWidth: 7,
@@ -52,6 +53,7 @@ class Home extends StatelessWidget {
         ),
         StoriesPage(
           name: 'man2',
+          id: '4533',
           cardDecoration: const CardDecorationWidget(
             imageSrc: 'images/2.png',
             shape: Shape.rectangle,
@@ -65,6 +67,7 @@ class Home extends StatelessWidget {
 
         StoriesPage(
           name: 'croc',
+          id: '4534',
           cardDecoration: const CardDecorationWidget(
             imageSrc: 'images/croc.png',
             shape: Shape.rectangle,
@@ -77,6 +80,7 @@ class Home extends StatelessWidget {
         ),
         StoriesPage(
           name: 'statue',
+          id: '4535',
           cardDecoration: const CardDecorationWidget(
             imageSrc: 'images/stoneFace.jpeg',
             shape: Shape.rectangle,
@@ -95,6 +99,7 @@ class Home extends StatelessWidget {
 
         StoriesPage(
           name: 'no_had',
+          id: '4536',
           cardDecoration: const CardDecorationWidget(
             imageSrc: 'images/_.jpeg',
             shape: Shape.rectangle,

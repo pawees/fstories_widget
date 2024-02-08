@@ -3,8 +3,8 @@ import 'package:fstories_widget/stories.dart';
 import 'package:fstories_widget/safe.dart';
 import 'package:fstories_widget/utils.dart';
 
-class MoveWatchedController extends ValueNotifier<MoveWatchedState> {
-  MoveWatchedController._() : super(MoveWatchedState.unwatched);
+class MoveWatchedController extends ValueNotifier<String> {
+  MoveWatchedController._() : super("");
 }
 
 final MoveWatchedController moveWatchedController = MoveWatchedController._();
@@ -24,38 +24,16 @@ class _StoriesCardListState extends State<StoriesCardList>
     with SetStateAfterFrame {
   late VoidCallback listener;
 
-  List<List<String>> content = [];
-  List<int> storiesLength = [];
-  List watchStatus = [];
-  List newCards = [];
-  List firstInitCards = [];
+  List cards = [];
 
-  int pageLength = 0;
-  int currentPage = 0;
-  int startIndexPage = 0;
-  int currentStory = 0;
-
-  void _moveWatchedToEnd() {
-    StoriesPage? element;
-
-    if (startIndexPage != 0) {
-      var find = firstInitCards[currentPage];
-      newCards.removeWhere((i) => i.hashCode == find.hashCode);
-      element = find;
-    } else {
-      element = newCards.removeAt(0);
-    }
-
-    newCards.add(element);
-
-
+  void _moveWatchedToEnd(StoriesPage find) {
+    cards.removeWhere((i) => i.hashCode == find.hashCode);
+    cards.add(find);
   }
 
-  void _watchedBorder() {
-
-    var find = firstInitCards[currentPage];
-    for(var i in newCards) {
-      if(i.hashCode == find.hashCode){
+  void _watchedBorder(StoriesPage find) {
+    for (var i in cards) {
+      if (i.hashCode == find.hashCode) {
         i.state = MoveWatchedState.watched;
         break;
       }
@@ -65,38 +43,20 @@ class _StoriesCardListState extends State<StoriesCardList>
   @override
   void initState() {
     super.initState();
-    firstInitCards =[...widget.cards ?? []];
 
-    newCards = widget.cards ?? [];
-
-    pageLength = newCards.length - 1;
-
-    // ignore: unused_local_variable
-    for (final card in newCards) {
-      watchStatus.add(MoveWatchedState.unwatched);
-    }
-
-    for (final card in newCards) {
-      gkey.currentState?.storiesLength.add(card.content.length);
-    }
-
-    for (final card in newCards) {
-      gkey.currentState?.content.add(card.content);
-    }
+    cards = [...widget.cards ?? []];
 
     listener = () {
-      switch (moveWatchedController.value) {
-        case MoveWatchedState.watched:
-          _watchedBorder();
-          _moveWatchedToEnd();
-          safeSetState(() {});
-
-          break;
-        case MoveWatchedState.unwatched:
-          return;
+      StoriesPage? find = findCardById(moveWatchedController.value, cards);
+      if (find != null) {
+        _watchedBorder(find);
+        _moveWatchedToEnd(find);
+        safeSetState(() {});
       }
+      ;
+
+      moveWatchedController.addListener(listener);
     };
-    moveWatchedController.addListener(listener);
   }
 
   @override
@@ -110,15 +70,13 @@ class _StoriesCardListState extends State<StoriesCardList>
             : Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: List.generate(
-                  newCards.length,
+                  cards.length,
                   (index) => Padding(
                     padding: const EdgeInsets.all(5.0),
                     child: OnStoryCardWidget(
-                      cardBorderDecor: newCards[index].borderDecoration,
-                      card: newCards[index].cardDecoration,
-                      page: index,
-                      storyLength: newCards[index].content.length,
-                      content: newCards[index].content,
+                      s_page: cards[index],
+                      cardPosition: index,
+                      cardsLength: cards.length,
                     ),
                   ),
                 ),
@@ -129,19 +87,14 @@ class _StoriesCardListState extends State<StoriesCardList>
 }
 
 class OnStoryCardWidget extends StatelessWidget {
-  final BorderDecoration cardBorderDecor;
-  final Widget card;
-
-  final int storyLength;
-  final int page;
-  final List<String> content;
+  final StoriesPage s_page;
+  final int cardPosition;
+  final int cardsLength;
 
   const OnStoryCardWidget({
-    required this.storyLength,
-    required this.page,
-    required this.content,
-    required this.cardBorderDecor,
-    required this.card,
+    required this.s_page,
+    required this.cardPosition,
+    required this.cardsLength,
     Key? key,
   }) : super(key: key);
 
@@ -149,20 +102,18 @@ class OnStoryCardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        gkey.currentState?.startIndexPage = page;
-
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) {
               return StoriesView(
-                storyLength: storyLength,
-                pageIndex: page,
-                pageLength: gkey.currentState?.storiesLength.length ?? 0,
+                cardId: s_page.id,
+                cardContent: s_page.content,
+                pageLength: cardsLength,
+                storyLength: s_page.storiesLength,
+                pageIndex: cardPosition,
                 onPageLimit: () {
                   Navigator.pop(context);
-                  gkey.currentState?.firstInitCards = gkey.currentState?.newCards ?? [];
-
                 },
               );
             },
@@ -170,11 +121,10 @@ class OnStoryCardWidget extends StatelessWidget {
         );
       },
       child: Container(
-        decoration: gkey.currentState?.newCards[page].state ==
-                MoveWatchedState.unwatched
-            ? cardBorderDecor.boxDecoration
+        decoration: s_page.state == MoveWatchedState.unwatched
+            ? s_page.borderDecoration!.boxDecoration //todo !
             : null,
-        child: card,
+        child: s_page.cardDecoration,
       ),
     );
   }
