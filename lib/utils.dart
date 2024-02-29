@@ -29,6 +29,7 @@ class CardDecorationWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     BoxShape shapeType;
+    //todo shapeType = switch()...
     switch (shape) {
       case Shape.rectangle:
         shapeType = BoxShape.rectangle;
