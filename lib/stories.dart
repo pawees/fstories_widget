@@ -11,15 +11,13 @@ typedef StoryItemBuilder = Widget Function(
 
 class StoriesView extends StatefulWidget {
   const StoriesView(
-      {
-      required this.onPageLimit,
+      {required this.onPageLimit,
       this.isWatchedController,
       required this.storyLength,
       required this.pageIndex,
       required this.pageLength,
       Key? key})
       : super(key: key);
-
 
   /// Functions like "Navigator.pop(context)" is expected.
   final VoidCallback? onPageLimit;
@@ -38,6 +36,7 @@ class StoriesView extends StatefulWidget {
 class _StoriesViewState extends State<StoriesView> {
   PageController? pageController;
   var currentPageValue;
+  bool animate = true;
 
   @override
   void initState() {
@@ -45,12 +44,23 @@ class _StoriesViewState extends State<StoriesView> {
 
     pageController = PageController(initialPage: widget.pageIndex);
 
-    currentPageValue = widget.pageIndex.toDouble();
 
     pageController!.addListener(() {
-      setState(() {
-        currentPageValue = pageController!.page;
-      });
+      if (!mounted)
+        return; // Проверяем, все ли еще виджет находится в дереве виджетов
+
+      if (pageController!.page!.round() != pageController!.page) {
+        // Перелистывание началось
+        // Останавливаем анимацию
+        animate = false;
+
+      } else {
+        // Перелистывание закончилось
+        animate = true;
+        //
+        setState(() {});
+
+      }
     });
   }
 
@@ -63,11 +73,13 @@ class _StoriesViewState extends State<StoriesView> {
           return Stack(
             children: [
               StoriesNotifierProvider(
-                isCurrentPage: currentPageValue == index,
-                contentBuilder: gkey.currentState?.content[index] ?? [''],
+                isAnimatingRow: animate,
+                contentBuilder:
+                    gkey.currentState?.newCards[index].content ?? [''],
                 pageIndex: index,
                 onPageLimit: widget.onPageLimit,
-                storyLength: gkey.currentState?.storiesLength[index] ?? 0,
+                storyLength:
+                    gkey.currentState?.newCards[index].content.length ?? 0,
                 pageLength: widget.pageLength,
                 onAnimatePage: (index, controller) {
                   pageController?.animateToPage(
@@ -85,7 +97,7 @@ class _StoriesViewState extends State<StoriesView> {
 
 class StoriesNotifierProvider extends StatelessWidget {
   const StoriesNotifierProvider(
-      {required this.isCurrentPage,
+      {required this.isAnimatingRow,
       required this.onAnimatePage,
       required this.contentBuilder,
       required this.pageIndex,
@@ -103,7 +115,7 @@ class StoriesNotifierProvider extends StatelessWidget {
   final int pageLength;
   final int pageIndex;
   final int storyLength;
-  final bool isCurrentPage;
+  final bool isAnimatingRow;
 
   @override
   Widget build(BuildContext context) {
@@ -115,6 +127,7 @@ class StoriesNotifierProvider extends StatelessWidget {
       pageLength: pageLength,
       onAnimatePage: onAnimatePage,
     );
+
     return IndexNotifierProvider(
       model: _model,
       child: _StoriesViewBuilder(
@@ -123,7 +136,7 @@ class StoriesNotifierProvider extends StatelessWidget {
         onPageLimit: onPageLimit,
         isWatchedController: isWatchedController,
         pageIndex: pageIndex,
-        isCurrentPage: isCurrentPage,
+        isAnimatingRow: isAnimatingRow,
       ),
     );
   }
@@ -131,7 +144,7 @@ class StoriesNotifierProvider extends StatelessWidget {
 
 class _StoriesViewBuilder extends StatefulWidget {
   const _StoriesViewBuilder(
-      {required this.isCurrentPage,
+      {required this.isAnimatingRow,
       required this.contentBuilder,
       required this.pageIndex,
       required this.onPageLimit,
@@ -146,7 +159,7 @@ class _StoriesViewBuilder extends StatefulWidget {
   final ValueNotifier<bool>? isWatchedController;
   final int pageLength;
   final int pageIndex;
-  final bool isCurrentPage;
+  final bool isAnimatingRow;
 
   @override
   State<_StoriesViewBuilder> createState() => _StoriesViewBuilderState();
@@ -172,6 +185,7 @@ class _StoriesViewBuilderState extends State<_StoriesViewBuilder>
               widget.onPageLimit,
               _controller,
             );
+
           }
 
           _controller.forward(from: 0);
@@ -181,7 +195,6 @@ class _StoriesViewBuilderState extends State<_StoriesViewBuilder>
 
   @override
   Widget build(BuildContext context) {
-
     final int currentStoryIndex =
         IndexNotifierProvider.watch(context)?.currentStoryIndex ?? 0;
 
@@ -190,7 +203,6 @@ class _StoriesViewBuilderState extends State<_StoriesViewBuilder>
         color: Colors.black,
         child: Stack(
           children: [
-
             ///image
             Positioned.fill(
               child: Image.asset(
@@ -198,14 +210,13 @@ class _StoriesViewBuilderState extends State<_StoriesViewBuilder>
               ),
             ),
 
-
             ///indicator
             Positioned(
               top: MediaQuery.of(context).padding.top + 5,
               left: 8.0 - 2.0 / 2,
               right: 8.0 - 2.0 / 2,
               child: _IndicatorsRow(
-                isCurrentPage: widget.isCurrentPage,
+                isAnimatingRow: widget.isAnimatingRow,
                 animationController: _controller,
               ),
             ),
@@ -228,7 +239,8 @@ class _StoriesViewBuilderState extends State<_StoriesViewBuilder>
                     onPressed: () {
                       _controller.stop();
                       Navigator.pop(context);
-                      gkey.currentState?.firstInitCards = gkey.currentState?.newCards ?? [];
+                      gkey.currentState?.firstInitCards =
+                          gkey.currentState?.newCards ?? [];
                     },
                     icon: Icon(Icons.close_rounded)),
               ),
@@ -258,20 +270,19 @@ class _Gestures extends StatelessWidget {
             child: GestureDetector(
               onTap: () {
                 animationController!.forward(from: 0);
-               IndexNotifierProvider.read(context)?.decrementStoryIndex();
-
+                IndexNotifierProvider.read(context)?.decrementStoryIndex();
               },
               onTapDown: (_) {
                 animationController!.stop();
               },
               onTapUp: (_) {
-                  animationController!.forward();
+                animationController!.forward();
               },
               onLongPress: () {
                 animationController!.stop();
               },
               onLongPressUp: () {
-                  animationController!.forward();
+                animationController!.forward();
               },
             ),
           ),
@@ -288,13 +299,13 @@ class _Gestures extends StatelessWidget {
                 animationController!.stop();
               },
               onTapUp: (_) {
-                  animationController!.forward();
+                animationController!.forward();
               },
               onLongPress: () {
                 animationController!.stop();
               },
               onLongPressUp: () {
-                  animationController!.forward();
+                animationController!.forward();
               },
             ),
           ),
@@ -306,13 +317,13 @@ class _Gestures extends StatelessWidget {
 
 class _IndicatorsRow extends StatefulWidget {
   const _IndicatorsRow(
-      {required this.isCurrentPage,
+      {required this.isAnimatingRow,
       required this.animationController,
       Key? key})
       : super(key: key);
 
   final AnimationController animationController;
-  final bool isCurrentPage;
+  final bool isAnimatingRow;
 
   @override
   State<_IndicatorsRow> createState() => _IndicatorsRowState();
@@ -339,15 +350,12 @@ class _IndicatorsRowState extends State<_IndicatorsRow>
   void didChangeDependencies() {
     storyLength = IndexNotifierProvider.read(context)?.storyLimit ?? 0;
 
-    if (!widget.isCurrentPage) {
+    if (!widget.isAnimatingRow) {
       widget.animationController.stop();
       IndexNotifierProvider.read(context)?.markCardAsWatched();
     }
 
-    if (widget.isCurrentPage) {
-      widget.animationController.forward();
-      IndexNotifierProvider.read(context)?.markCardAsUnWatched();
-    }
+
     super.didChangeDependencies();
   }
 
@@ -355,7 +363,7 @@ class _IndicatorsRowState extends State<_IndicatorsRow>
   void didUpdateWidget(covariant _IndicatorsRow oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (widget.isCurrentPage) {
+    if (widget.isAnimatingRow) {
       widget.animationController.forward();
       IndexNotifierProvider.read(context)?.markCardAsUnWatched();
     }

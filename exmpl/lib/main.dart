@@ -30,19 +30,17 @@ class Home extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StoriesCardList(
+      shape: Shape.circle,
+      size: Size(75, 85),
+      borderDecoration: BorderDecoration(
+        shape: Shape.circle,
+        color: Colors.orange.withOpacity(0.4),
+        strokeWidth: 5,
+      ),
       cards: [
         StoriesPage(
           name: 'man mustaches',
-          borderDecoration: BorderDecoration(
-            color: Colors.orange.withOpacity(0.5),
-            strokeWidth: 7,
-          ),
-          cardDecoration: const CardDecorationWidget(
-            imageSrc: 'images/s.png',
-            shape: Shape.rectangle,
-            size: Size(65, 85),
-            color: Color(0xffb74093),
-          ),
+          imageSrc: 'images/s.png',
           content: [
             'images/6.jpeg',
             'images/7.jpeg',
@@ -52,37 +50,21 @@ class Home extends StatelessWidget {
         ),
         StoriesPage(
           name: 'man2',
-          cardDecoration: const CardDecorationWidget(
-            imageSrc: 'images/2.png',
-            shape: Shape.rectangle,
-            size: Size(65, 85),
-            color: Color(0xffb74093),
-          ),
+          imageSrc: 'images/16.jpeg',
           content: [
             'images/7.jpeg',
           ],
         ),
-
         StoriesPage(
           name: 'croc',
-          cardDecoration: const CardDecorationWidget(
-            imageSrc: 'images/croc.png',
-            shape: Shape.rectangle,
-            size: Size(65, 85),
-            color: Color(0xffb74093),
-          ),
+          imageSrc: 'images/_.jpeg',
           content: [
             'images/12.jpeg',
           ],
         ),
         StoriesPage(
           name: 'statue',
-          cardDecoration: const CardDecorationWidget(
-            imageSrc: 'images/stoneFace.jpeg',
-            shape: Shape.rectangle,
-            size: Size(65, 85),
-            color: Color(0xffb74093),
-          ),
+          imageSrc: 'images/croc.png',
           content: [
             'images/18.jpeg',
             'images/17.jpeg',
@@ -92,15 +74,9 @@ class Home extends StatelessWidget {
             'images/8.jpeg',
           ],
         ),
-
         StoriesPage(
           name: 'no_had',
-          cardDecoration: const CardDecorationWidget(
-            imageSrc: 'images/_.jpeg',
-            shape: Shape.rectangle,
-            size: Size(65, 85),
-            color: Color(0xffb74093),
-          ),
+          imageSrc: 'images/stoneFace.jpeg',
           content: [
             'images/13.jpeg',
             'images/10.jpeg',
