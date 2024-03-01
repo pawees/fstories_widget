@@ -44,7 +44,6 @@ class _StoriesViewState extends State<StoriesView> {
 
     pageController = PageController(initialPage: widget.pageIndex);
 
-
     pageController!.addListener(() {
       if (!mounted)
         return; // Проверяем, все ли еще виджет находится в дереве виджетов
@@ -53,13 +52,11 @@ class _StoriesViewState extends State<StoriesView> {
         // Перелистывание началось
         // Останавливаем анимацию
         animate = false;
-
       } else {
         // Перелистывание закончилось
         animate = true;
         //
         setState(() {});
-
       }
     });
   }
@@ -185,7 +182,6 @@ class _StoriesViewBuilderState extends State<_StoriesViewBuilder>
               widget.onPageLimit,
               _controller,
             );
-
           }
 
           _controller.forward(from: 0);
@@ -195,19 +191,14 @@ class _StoriesViewBuilderState extends State<_StoriesViewBuilder>
 
   @override
   Widget build(BuildContext context) {
-    final int currentStoryIndex =
-        IndexNotifierProvider.watch(context)?.currentStoryIndex ?? 0;
-
     return Scaffold(
       body: ColoredBox(
         color: Colors.black,
         child: Stack(
           children: [
             ///image
-            Positioned.fill(
-              child: Image.asset(
-                widget.contentBuilder[currentStoryIndex],
-              ),
+            _Content(
+              widget: widget,
             ),
 
             ///indicator
@@ -247,6 +238,64 @@ class _StoriesViewBuilderState extends State<_StoriesViewBuilder>
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _Content extends StatefulWidget {
+  const _Content({
+    super.key,
+    required this.widget,
+  });
+
+  final _StoriesViewBuilder widget;
+
+  @override
+  State<_Content> createState() => _ContentState();
+}
+
+class _ContentState extends State<_Content>
+    with SingleTickerProviderStateMixin {
+
+  late final _controller;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _controller = AnimationController(
+        duration: const Duration(milliseconds: 180), vsync: this);
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final int currentStoryIndex =
+        IndexNotifierProvider.watch(context)?.currentStoryIndex ?? 0;
+
+    if (currentStoryIndex != 0) {
+      _controller.reset();
+      _controller.forward();
+    }
+
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Opacity(
+          opacity: _controller.value,
+          child: child,
+        );
+      },
+      child: Image.asset(
+        widget.widget.contentBuilder[currentStoryIndex],
       ),
     );
   }
@@ -331,7 +380,7 @@ class _IndicatorsRow extends StatefulWidget {
 
 class _IndicatorsRowState extends State<_IndicatorsRow>
     with SetStateAfterFrame {
-  late Animation<double> indicatorAnimation;
+  //late Animation<double> indicatorAnimation;
   late int storyLength;
   late int currentStoryIndex;
 
@@ -339,11 +388,8 @@ class _IndicatorsRowState extends State<_IndicatorsRow>
   void initState() {
     super.initState();
     widget.animationController.forward();
-    indicatorAnimation =
-        Tween(begin: 0.0, end: 1.0).animate(widget.animationController)
-          ..addListener(() {
-            setState(() {});
-          });
+    // indicatorAnimation =
+    //     Tween(begin: 0.0, end: 1.0).animate(widget.animationController);
   }
 
   @override
@@ -355,12 +401,11 @@ class _IndicatorsRowState extends State<_IndicatorsRow>
       IndexNotifierProvider.read(context)?.markCardAsWatched();
     }
 
-
     super.didChangeDependencies();
   }
 
   @override
-  void didUpdateWidget(covariant _IndicatorsRow oldWidget) {
+  void didUpdateWidget(_IndicatorsRow oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     if (widget.isAnimatingRow) {
@@ -371,17 +416,21 @@ class _IndicatorsRowState extends State<_IndicatorsRow>
 
   @override
   Widget build(BuildContext context) {
-    currentStoryIndex = IndexNotifierProvider.read(context)?.storyIndex ?? 0;
+    currentStoryIndex = IndexNotifierProvider.watch(context)?.storyIndex ?? 0;
 
     return Row(
       children: List.generate(storyLength + 1, (index) {
-        return _Indicator(
-          index: index,
-          progress: (index == currentStoryIndex)
-              ? indicatorAnimation.value
-              : (index > currentStoryIndex)
+        return AnimatedBuilder(
+          animation: widget.animationController,
+          builder: (context,child){
+            return _Indicator(
+              progress: (index == currentStoryIndex)
+                  ? widget.animationController.value
+                  : (index > currentStoryIndex)
                   ? 0
                   : 1,
+            );
+          },
         );
       }),
     );
@@ -395,11 +444,10 @@ class _IndicatorsRowState extends State<_IndicatorsRow>
 }
 
 class _Indicator extends StatelessWidget {
-  const _Indicator({required this.progress, required this.index, Key? key})
+  const _Indicator({required this.progress, Key? key})
       : super(key: key);
 
-  ///need for calculate padding between indicators
-  final int index;
+
   final double progress;
 
   @override
