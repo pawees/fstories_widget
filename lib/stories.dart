@@ -11,13 +11,16 @@ typedef StoryItemBuilder = Widget Function(
 
 class StoriesView extends StatefulWidget {
   const StoriesView(
-      {required this.onPageLimit,
+      {required this.storyCards,
+      required this.onPageLimit,
       this.isWatchedController,
       required this.storyLength,
       required this.pageIndex,
       required this.pageLength,
       Key? key})
       : super(key: key);
+
+  final storyCards;
 
   /// Functions like "Navigator.pop(context)" is expected.
   final VoidCallback? onPageLimit;
@@ -71,12 +74,10 @@ class _StoriesViewState extends State<StoriesView> {
             children: [
               StoriesNotifierProvider(
                 isAnimatingRow: animate,
-                contentBuilder:
-                    gkey.currentState?.newCards[index].content ?? [''],
+                contentBuilder: widget.storyCards[index].content,
                 pageIndex: index,
                 onPageLimit: widget.onPageLimit,
-                storyLength:
-                    gkey.currentState?.newCards[index].content.length ?? 0,
+                storyLength: widget.storyCards[index].content.length,
                 pageLength: widget.pageLength,
                 onAnimatePage: (index, controller) {
                   pageController?.animateToPage(
@@ -172,7 +173,7 @@ class _StoriesViewBuilderState extends State<_StoriesViewBuilder>
 
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 2800),
+      duration: const Duration(milliseconds: 2800),
     )..addStatusListener((status) {
         if (status == AnimationStatus.completed) {
           bool isNextPage =
@@ -257,7 +258,6 @@ class _Content extends StatefulWidget {
 
 class _ContentState extends State<_Content>
     with SingleTickerProviderStateMixin {
-
   late final _controller;
 
   @override
@@ -422,13 +422,13 @@ class _IndicatorsRowState extends State<_IndicatorsRow>
       children: List.generate(storyLength + 1, (index) {
         return AnimatedBuilder(
           animation: widget.animationController,
-          builder: (context,child){
+          builder: (context, child) {
             return _Indicator(
               progress: (index == currentStoryIndex)
                   ? widget.animationController.value
                   : (index > currentStoryIndex)
-                  ? 0
-                  : 1,
+                      ? 0
+                      : 1,
             );
           },
         );
@@ -444,9 +444,7 @@ class _IndicatorsRowState extends State<_IndicatorsRow>
 }
 
 class _Indicator extends StatelessWidget {
-  const _Indicator({required this.progress, Key? key})
-      : super(key: key);
-
+  const _Indicator({required this.progress, Key? key}) : super(key: key);
 
   final double progress;
 

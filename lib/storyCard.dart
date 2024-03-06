@@ -47,6 +47,9 @@ class _StoriesCardListState extends State<StoriesCardList>
 
     if (startIndexPage != 0) {
       var find = firstInitCards[currentPage];
+      if(find.state == MoveWatchedState.watched){
+        return;
+      };
       newCards.removeWhere((i) => i.hashCode == find.hashCode);
       element = find;
     } else {
@@ -79,7 +82,8 @@ class _StoriesCardListState extends State<StoriesCardList>
       switch (moveWatchedController.value) {
         case MoveWatchedState.watched:
           _watchedBorder();
-          //_moveWatchedToEnd();
+          _moveWatchedToEnd();
+
           safeSetState(() {});
 
           break;
@@ -92,6 +96,9 @@ class _StoriesCardListState extends State<StoriesCardList>
 
   @override
   Widget build(BuildContext context) {
+
+    print('rebuild when page change');
+    var newList = [...?gkey.currentState?.newCards ?? []];
     return Align(
       alignment: Alignment.topLeft,
       child: SingleChildScrollView(
@@ -105,6 +112,7 @@ class _StoriesCardListState extends State<StoriesCardList>
                   (index) => Padding(
                     padding: const EdgeInsets.all(5.0),
                     child: OnStoryCardWidget(
+                      storyCards: newList,
                       cardBorderDecor: widget.borderDecoration,
                       card: CardDecorationWidget(
                         shape: widget.shape,
@@ -130,8 +138,10 @@ class OnStoryCardWidget extends StatelessWidget {
   final int storyLength;
   final int page;
   final List<String> content;
+  final storyCards;
 
   const OnStoryCardWidget({
+    required this.storyCards,
     required this.storyLength,
     required this.page,
     required this.content,
@@ -151,6 +161,7 @@ class OnStoryCardWidget extends StatelessWidget {
           MaterialPageRoute(
             builder: (context) {
               return StoriesView(
+                storyCards: storyCards,
                 storyLength: storyLength,
                 pageIndex: page,
                 pageLength: gkey.currentState?.newCards.length ?? 0,
