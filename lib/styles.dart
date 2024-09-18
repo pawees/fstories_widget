@@ -1,14 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:fstories_widget/models/enums.dart';
 
-enum Shape {
-  rectangle,
-  circle,
-}
 
-enum MoveWatchedState {
-  watched,
-  unwatched,
-}
 
 class CardDecorationWidget extends StatelessWidget {
   const CardDecorationWidget(
@@ -29,7 +22,6 @@ class CardDecorationWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     BoxShape shapeType;
-    //todo shapeType = switch()...
     switch (shape) {
       case Shape.rectangle:
         shapeType = BoxShape.rectangle;
@@ -48,7 +40,7 @@ class CardDecorationWidget extends StatelessWidget {
             color: Colors.white70,
             image: DecorationImage(
               image: AssetImage(imageSrc),
-              fit: BoxFit.cover,
+              fit: BoxFit.fill,
             ),
           )),
     );
@@ -84,10 +76,10 @@ class BorderDecoration {
   static const double standartBorderRadius = 20;
   static const double standartStroke = 4;
 
-  const BorderDecoration.standart()
+   BorderDecoration.standart()
       : borderRadius = standartBorderRadius,
         color = standartColor,
-        shape = Shape.rectangle,
+        shape = Shape.circle,
         strokeWidth = standartStroke,
         boxDecoration = const BoxDecoration(
           borderRadius: const BorderRadius.all(
@@ -99,20 +91,3 @@ class BorderDecoration {
         );
 }
 
-class StoriesPage {
-  /// Name of the story circle
-  String? name;
-  final String imageSrc;
-
-  final List<String> content;
-
-  MoveWatchedState state = MoveWatchedState.unwatched;
-
-  /// Add a story
-  StoriesPage({
-    required this.imageSrc,
-    this.name,
-    required this.content,
-    this.state = MoveWatchedState.unwatched,
-  });
-}

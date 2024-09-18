@@ -13,7 +13,6 @@ mixin SetStateAfterFrame<T extends StatefulWidget> on State<T> {
     }
   }
 
-  /// a little hack to avoid warning on Flutter < 3.0
   dynamic get _widgetsBinding {
     return WidgetsBinding.instance;
   }
