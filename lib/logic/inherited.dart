@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:fstories_widget/models/enums.dart';
 import 'package:fstories_widget/models/stories_card.dart';
+import 'package:fstories_widget/utils/mixin.dart';
 
 typedef OnAnimatePage = void Function(int, AnimationController);
+
+
 
 class IndexModel extends ChangeNotifier {
   IndexModel({
@@ -28,6 +31,9 @@ class IndexModel extends ChangeNotifier {
 
   List<StoriesCard> _deleteIndexes = [];
 
+  bool canAnimate = false;
+
+
 
   get currentStoryIndex => storyIndex >= storyLimit ? storyLimit : storyIndex;
 
@@ -41,7 +47,11 @@ class IndexModel extends ChangeNotifier {
 
   get pageLength => cards.length;
 
-  // новая копия списка cards
+  get isEndContentPage => storyIndex == storyLimit;
+
+
+
+
   void _modifyCardsList() {
 
     cards.removeWhere((element) => _deleteIndexes.contains(element));
@@ -64,11 +74,13 @@ class IndexModel extends ChangeNotifier {
   }
 
   incrementStoryIndex() {
+    canAnimate = false;
+
     //как пишут логи мастера посмотреть суперТекст
     print('Story limit: $storyLimit , Story index: $storyIndex');
 
 
-    if (storyIndex == storyLimit) {
+    if (isEndContentPage) {
       _onPageLimitReached();
       _openNextPage();
 
@@ -101,12 +113,14 @@ class IndexModel extends ChangeNotifier {
       _modifyCardsList();
 
       onPageLimitReachedCallback?.call();
+
       return;
     }
   }
 
-  _openNextPage() {
+  _openNextPage() async {
     pageIndex += 1;
+    canAnimate = true;
     print('Open next page');
     print(' page index : $pageIndex');
     print(cards[pageIndex].content);
@@ -115,9 +129,9 @@ class IndexModel extends ChangeNotifier {
     _onCard = cards[pageIndex];
     storyIndex = 0;
 
-    notifyListeners();
 
-    //onAnimatePage(pageIndex, controller);
+    notifyListeners();
+    
   }
 
   _openPrevPage() {}

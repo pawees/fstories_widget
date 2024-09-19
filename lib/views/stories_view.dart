@@ -2,6 +2,7 @@ library stories;
 
 import 'package:flutter/material.dart';
 import 'package:fstories_widget/models/stories_card.dart';
+import 'package:fstories_widget/utils/mixin.dart';
 import 'package:fstories_widget/utils/safe.dart';
 import '../logic/inherited.dart';
 
@@ -25,10 +26,6 @@ class StoriesViewF extends StatefulWidget {
 
 class _StoriesViewStateF extends State<StoriesViewF> {
   PageController? pageController;
-  //тоже можно вынести в модель, лучше вынести в миксин управления анимациями
-  //переменная отвечает за паузу полоски индикатора, но из-за не приходится перестраивать
-  //в глубину много страниц
-  //убрать ее в модели и заставить следить индикатор
 
   @override
   Widget build(BuildContext context) {
@@ -50,9 +47,7 @@ class _StoriesViewStateF extends State<StoriesViewF> {
         isEnded: false,
         controller: widget.controller,
       ),
-      child: NewWidget(
-        pageController: pageController,
-      ),
+      child: NewWidget(      ),
     );
   }
 }
@@ -60,53 +55,36 @@ class _StoriesViewStateF extends State<StoriesViewF> {
 class NewWidget extends StatefulWidget {
   const NewWidget({
     super.key,
-    required this.pageController,
   });
 
-  final PageController? pageController;
 
   @override
   State<NewWidget> createState() => _NewWidgetState();
 }
 
-class _NewWidgetState extends State<NewWidget> {
-  bool animate = true;
-  late final pageController;
+class _NewWidgetState extends State<NewWidget>  with SingleTickerProviderStateMixin, PageControllerMixin{
+
+  late final www;
 
   @override
   void initState() {
     super.initState();
 
-    pageController = PageController(
-        initialPage: IndexNotifierProvider.read(context)?.pageIndex ?? 0);
-    //TODO: maybe mixin organaise and encapsulate this listeners?
-    pageController!.addListener(() {
-      //TODO: smells very bad
-      if (!mounted)
-        return; // Проверяем, все ли еще виджет находится в дереве виджетов
+    www=pageController;
+    listener;
+    //logicSwicherListener;
 
-      if (pageController!.page!.round() != pageController!.page) {
-        // Перелистывание началось
-        // Останавливаем анимацию полоски
-        animate = false;
-      } else {
-        // Перелистывание закончилось продолжаем анимацию полоски
-        animate = true;
-        //
-        setState(() {});
-      }
-    });
+
   }
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       child: PageView.builder(
-          controller: widget.pageController,
+          controller: www,
           itemCount: IndexNotifierProvider.read(context)?.storyLength,
           itemBuilder: (context, index) {
             return _StoriesViewBuilderF(
-              isAnimatingRow: animate,
             );
           }),
     );
@@ -114,33 +92,23 @@ class _NewWidgetState extends State<NewWidget> {
 }
 
 class _StoriesViewBuilderF extends StatefulWidget {
-  const _StoriesViewBuilderF({required this.isAnimatingRow, Key? key})
+  const _StoriesViewBuilderF({ Key? key})
       : super(key: key);
 
-  final bool isAnimatingRow; //TODO: smells BAD
-
   @override
-  State<_StoriesViewBuilderF> createState() => _StoriesViewBuilderStateF();
+  State<_StoriesViewBuilderF> createState() => _StoriesViewBuilderFState();
 }
 
-class _StoriesViewBuilderStateF extends State<_StoriesViewBuilderF>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+class _StoriesViewBuilderFState extends State<_StoriesViewBuilderF> with SingleTickerProviderStateMixin, PlayIndicatorMixin{
 
-  @override
+
+@override
   void initState() {
     super.initState();
+    animationController;
+    changeIndicatorListener;
+    listener;
 
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2800),
-    )..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          IndexNotifierProvider.read(context)?.incrementStoryIndex();
-
-          _controller.forward(from: 0);
-        }
-      });
   }
 
   @override
@@ -160,16 +128,11 @@ class _StoriesViewBuilderStateF extends State<_StoriesViewBuilderF>
               top: MediaQuery.of(context).padding.top + 5,
               left: 8.0 - 2.0 / 2,
               right: 8.0 - 2.0 / 2,
-              child: _IndicatorsRow(
-                isAnimatingRow: widget.isAnimatingRow,
-                animationController: _controller,
-              ),
+              child: _IndicatorsRow(animationController: animationController,),
             ),
 
             ///gestures
-            _Gestures(
-              animationController: _controller,
-            ),
+            _Gestures(animationController: animationController,),
 
             ///close btn
             Positioned(
@@ -182,9 +145,7 @@ class _StoriesViewBuilderStateF extends State<_StoriesViewBuilderF>
                 ),
                 child: IconButton(
                     onPressed: () {
-                      _controller.stop();
-                      IndexNotifierProvider.read(context)
-                          ?.onClose(() {
+                      IndexNotifierProvider.read(context)?.onClose(() {
                         Navigator.of(context).pop();
                       });
                     },
@@ -319,13 +280,12 @@ class _Gestures extends StatelessWidget {
 
 class _IndicatorsRow extends StatefulWidget {
   const _IndicatorsRow(
-      {required this.isAnimatingRow,
+      {
       required this.animationController,
       Key? key})
       : super(key: key);
 
   final AnimationController animationController;
-  final bool isAnimatingRow;
 
   @override
   State<_IndicatorsRow> createState() => _IndicatorsRowState();
@@ -341,29 +301,16 @@ class _IndicatorsRowState extends State<_IndicatorsRow>
   void initState() {
     super.initState();
     widget.animationController.forward();
-    // indicatorAnimation =
-    //     Tween(begin: 0.0, end: 1.0).animate(widget.animationController);
   }
 
   @override
   void didChangeDependencies() {
     storyLength = IndexNotifierProvider.read(context)?.storyLimit ?? 0;
 
-    if (!widget.isAnimatingRow) {
-      widget.animationController.stop();
-    }
 
     super.didChangeDependencies();
   }
 
-  @override
-  void didUpdateWidget(_IndicatorsRow oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (widget.isAnimatingRow) {
-      widget.animationController.forward();
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -387,12 +334,8 @@ class _IndicatorsRowState extends State<_IndicatorsRow>
     );
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-    widget.animationController.dispose();
-  }
 }
+
 
 class _Indicator extends StatelessWidget {
   const _Indicator({required this.progress, Key? key}) : super(key: key);
