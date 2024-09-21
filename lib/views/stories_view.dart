@@ -33,7 +33,7 @@ class _StoriesViewStateF extends State<StoriesViewF> {
       model: IndexModel(
         onPageLimitReachedCallback: () {
           Navigator.of(context).pop();
-        },
+        }, //под вопросом
         storyIndex: 0,
         cards: widget.cards,
         pageIndex: widget.cardIndex,
@@ -47,44 +47,38 @@ class _StoriesViewStateF extends State<StoriesViewF> {
         isEnded: false,
         controller: widget.controller,
       ),
-      child: NewWidget(      ),
+      child: NewWidget(),
     );
   }
 }
 
+//TODO: call this class StoriesPageBuilder!
 class NewWidget extends StatefulWidget {
   const NewWidget({
     super.key,
   });
 
-
   @override
   State<NewWidget> createState() => _NewWidgetState();
 }
 
-class _NewWidgetState extends State<NewWidget>  with SingleTickerProviderStateMixin, PageControllerMixin{
-
-  late final www;
-
+class _NewWidgetState extends State<NewWidget>
+    with SingleTickerProviderStateMixin, ControllerMixin {
   @override
   void initState() {
+    animationController.addStatusListener(changeIndicatorListener);
     super.initState();
-
-    www=pageController;
-    listener;
-    //logicSwicherListener;
-
-
   }
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       child: PageView.builder(
-          controller: www,
-          itemCount: IndexNotifierProvider.read(context)?.storyLength,
+          controller: pageController,
+          itemCount: IndexNotifierProvider.read(context)?.pageLength,
           itemBuilder: (context, index) {
             return _StoriesViewBuilderF(
+              animationCntroller: animationController,
             );
           }),
     );
@@ -92,23 +86,34 @@ class _NewWidgetState extends State<NewWidget>  with SingleTickerProviderStateMi
 }
 
 class _StoriesViewBuilderF extends StatefulWidget {
-  const _StoriesViewBuilderF({ Key? key})
+  _StoriesViewBuilderF({required this.animationCntroller, Key? key})
       : super(key: key);
+
+  final AnimationController animationCntroller;
 
   @override
   State<_StoriesViewBuilderF> createState() => _StoriesViewBuilderFState();
 }
 
-class _StoriesViewBuilderFState extends State<_StoriesViewBuilderF> with SingleTickerProviderStateMixin, PlayIndicatorMixin{
-
-
-@override
+//TODO: call this class Scene!
+class _StoriesViewBuilderFState extends State<_StoriesViewBuilderF>
+    with SingleTickerProviderStateMixin {
+  @override
   void initState() {
+    final hash = widget.hashCode;
+    print('scene заинитился $hash');
+    // widget.animationCntroller.reset();
+    // widget.animationCntroller.forward();
     super.initState();
-    animationController;
-    changeIndicatorListener;
-    listener;
+  }
 
+  @override
+  void dispose() {
+    final hash = widget.hashCode;
+    print('scene задиспожен $hash');
+
+    //widget.animationCntroller.dispose();
+    super.dispose();
   }
 
   @override
@@ -128,11 +133,15 @@ class _StoriesViewBuilderFState extends State<_StoriesViewBuilderF> with SingleT
               top: MediaQuery.of(context).padding.top + 5,
               left: 8.0 - 2.0 / 2,
               right: 8.0 - 2.0 / 2,
-              child: _IndicatorsRow(animationController: animationController,),
+              child: _IndicatorsRow(
+                animationController: widget.animationCntroller,
+              ),
             ),
 
             ///gestures
-            _Gestures(animationController: animationController,),
+            _Gestures(
+              animationController: widget.animationCntroller,
+            ),
 
             ///close btn
             Positioned(
@@ -172,9 +181,15 @@ class _ContentState extends State<_Content>
     with SingleTickerProviderStateMixin {
   late final _controller;
 
+  late int currentStoryIndex;
+  late String src;
+
+    late int prevCurrentStoryIndex;
+  late String prevSrc;
+
+
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _controller = AnimationController(
         duration: const Duration(milliseconds: 180), vsync: this);
@@ -183,19 +198,36 @@ class _ContentState extends State<_Content>
   }
 
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  void didChangeDependencies() {
+          currentStoryIndex =
+          IndexNotifierProvider.watch(context)?.currentStoryIndex ?? 0;
+      src = IndexNotifierProvider.read(context)
+          ?.currentPage
+          .content[currentStoryIndex];
+    super.didChangeDependencies();
+    // bool visible = IndexNotifierProvider.watch(context)?.isRowVisible ?? true;
+    // if (visible) {
+    //   currentStoryIndex =
+    //       IndexNotifierProvider.watch(context)?.currentStoryIndex ?? 0;
+    //   src = IndexNotifierProvider.read(context)
+    //       ?.currentPage
+    //       .content[currentStoryIndex];
+
+
+    // }
+    // if (!visible) {
+    //   currentStoryIndex =
+    //       IndexNotifierProvider.watch(context)?.prevCurrentStoryIndex ?? 0;
+    //   src = IndexNotifierProvider.read(context)
+    //       ?.prevCurrentPage
+    //       .content[currentStoryIndex];
+    // }
   }
+
+
 
   @override
   Widget build(BuildContext context) {
-    final int currentStoryIndex =
-        IndexNotifierProvider.watch(context)?.currentStoryIndex;
-
-    final String src = IndexNotifierProvider.read(context)
-        ?.currentPage
-        .content[currentStoryIndex];
 
     if (currentStoryIndex != 0) {
       _controller.reset();
@@ -213,6 +245,8 @@ class _ContentState extends State<_Content>
       child: Image.asset(src),
     );
   }
+
+
 }
 
 class _Gestures extends StatelessWidget {
@@ -279,10 +313,7 @@ class _Gestures extends StatelessWidget {
 }
 
 class _IndicatorsRow extends StatefulWidget {
-  const _IndicatorsRow(
-      {
-      required this.animationController,
-      Key? key})
+  const _IndicatorsRow({required this.animationController, Key? key})
       : super(key: key);
 
   final AnimationController animationController;
@@ -297,6 +328,8 @@ class _IndicatorsRowState extends State<_IndicatorsRow>
   late int storyLength;
   late int currentStoryIndex;
 
+  late bool visible;
+
   @override
   void initState() {
     super.initState();
@@ -305,37 +338,38 @@ class _IndicatorsRowState extends State<_IndicatorsRow>
 
   @override
   void didChangeDependencies() {
-    storyLength = IndexNotifierProvider.read(context)?.storyLimit ?? 0;
+    visible = IndexNotifierProvider.watch(context)?.isRowVisible ?? true;
 
+    storyLength = IndexNotifierProvider.read(context)?.storyLimit ?? 0;
 
     super.didChangeDependencies();
   }
-
 
   @override
   Widget build(BuildContext context) {
     currentStoryIndex = IndexNotifierProvider.watch(context)?.storyIndex ?? 0;
 
-    return Row(
-      children: List.generate(storyLength + 1, (index) {
-        return AnimatedBuilder(
-          animation: widget.animationController,
-          builder: (context, child) {
-            return _Indicator(
-              progress: (index == currentStoryIndex)
-                  ? widget.animationController.value
-                  : (index > currentStoryIndex)
-                      ? 0
-                      : 1,
-            );
-          },
-        );
-      }),
+    return Visibility(
+      visible: visible,
+      child: Row(
+        children: List.generate(storyLength + 1, (index) {
+          return AnimatedBuilder(
+            animation: widget.animationController,
+            builder: (context, child) {
+              return _Indicator(
+                progress: (index == currentStoryIndex)
+                    ? widget.animationController.value
+                    : (index > currentStoryIndex)
+                        ? 0
+                        : 1,
+              );
+            },
+          );
+        }),
+      ),
     );
   }
-
 }
-
 
 class _Indicator extends StatelessWidget {
   const _Indicator({required this.progress, Key? key}) : super(key: key);

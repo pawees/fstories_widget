@@ -5,8 +5,6 @@ import 'package:fstories_widget/utils/mixin.dart';
 
 typedef OnAnimatePage = void Function(int, AnimationController);
 
-
-
 class IndexModel extends ChangeNotifier {
   IndexModel({
     required this.controller,
@@ -27,33 +25,31 @@ class IndexModel extends ChangeNotifier {
 
   List<StoriesCard> cards;
   StoriesCard _onCard;
+
   VoidCallback? onPageLimitReachedCallback;
 
   List<StoriesCard> _deleteIndexes = [];
 
-  bool canAnimate = false;
-
-
+  bool isRowVisible = true;
 
   get currentStoryIndex => storyIndex >= storyLimit ? storyLimit : storyIndex;
 
+
   get currentPage => _onCard;
+
 
   get storyLimit => _onCard.content.length - 1;
 
-  get storyLength => _onCard.content.length;
+  get storyLength => _onCard.content.length + 1;
 
   get pageLimit => cards.length - 1;
 
   get pageLength => cards.length;
 
   get isEndContentPage => storyIndex == storyLimit;
-
-
-
+  get isEndAllPages => pageIndex == pageLimit;
 
   void _modifyCardsList() {
-
     cards.removeWhere((element) => _deleteIndexes.contains(element));
 
     for (var item in _deleteIndexes) {
@@ -62,6 +58,15 @@ class IndexModel extends ChangeNotifier {
     _deleteIndexes.clear();
 
     controller.sink.add(cards);
+  }
+
+  visible(value,shouldNotify) {
+    isRowVisible = value;
+    if(shouldNotify){
+    notifyListeners();
+
+
+    }
   }
 
   decrementStoryIndex() {
@@ -74,43 +79,28 @@ class IndexModel extends ChangeNotifier {
   }
 
   incrementStoryIndex() {
-    canAnimate = false;
-
     //как пишут логи мастера посмотреть суперТекст
-    print('Story limit: $storyLimit , Story index: $storyIndex');
-
-
-    if (isEndContentPage) {
-      _onPageLimitReached();
-      _openNextPage();
-
-      return;
-
-    } 
+    //print('Story limit: $storyLimit , Story index: $storyIndex');
 
     storyIndex += 1;
     notifyListeners();
-
-
   }
 
-  onClose(VoidCallback? callback,) {
-      print('tapped close button');
+  onClose(
+    VoidCallback? callback,
+  ) {
+    print('tapped close button');
 
-      _modifyCardsList();
-      callback?.call();
-
-    
+    _modifyCardsList();
+    callback?.call();
   }
 
-  _onPageLimitReached() {
-
-    _deleteIndexes.add(_onCard);
+  onPageLimitReached() {
+    _markPageAsWatched();
 
     if (pageIndex == pageLimit) {
-      print('page limit reached');
 
-      _modifyCardsList();
+     _modifyCardsList();
 
       onPageLimitReachedCallback?.call();
 
@@ -118,20 +108,23 @@ class IndexModel extends ChangeNotifier {
     }
   }
 
-  _openNextPage() async {
+  _markPageAsWatched() {
+    _deleteIndexes.add(_onCard);
+  }
+
+
+  openNextPage() async {
+
+    _markPageAsWatched();
+
     pageIndex += 1;
-    canAnimate = true;
-    print('Open next page');
-    print(' page index : $pageIndex');
-    print(cards[pageIndex].content);
-    print(' ______________________');
 
     _onCard = cards[pageIndex];
+    
     storyIndex = 0;
 
 
-    notifyListeners();
-    
+    //notifyListeners();
   }
 
   _openPrevPage() {}

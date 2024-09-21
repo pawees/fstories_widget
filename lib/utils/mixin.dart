@@ -1,101 +1,79 @@
 import 'package:flutter/material.dart';
 import 'package:fstories_widget/logic/inherited.dart';
+import 'package:fstories_widget/utils/delayer.dart';
 
-ValueNotifier<String?> activeControllerNotifier = ValueNotifier<String?>(null);
-
-const _animationDuration = Duration(milliseconds: 400);
-const _animationDuration2 = Duration(milliseconds: 700);
-
-mixin PlayIndicatorMixin<T extends StatefulWidget>
+mixin ControllerMixin<T extends StatefulWidget>
     on SingleTickerProviderStateMixin<T> {
-  Duration get duration => _animationDuration;
-  Duration? get reverseDuration => null;
-  double get upperBound => 1.0;
-  double get lowerBound => 0.0;
+  //TODO: каким то образом прокинуть дюрацию для контроллера
+
+  late final pageController = PageController(initialPage: IndexNotifierProvider.read(context)?.pageIndex ?? 0 );
 
   late final animationController = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 2800),
+    duration: const Duration(milliseconds: 1300),
   );
 
-  get changeIndicatorListener =>
-      animationController.addStatusListener((status) {
+  get changeIndicatorListener => (status) async {
         if (status == AnimationStatus.completed) {
-          IndexNotifierProvider.read(context)?.incrementStoryIndex();
-          animationController.forward(from: 0);
-          print('curernt index ${IndexNotifierProvider.read(context)?.currentStoryIndex}');
-          
+          //если страницы кончились
+          if (IndexNotifierProvider.read(context)?.isEndAllPages) {
+            IndexNotifierProvider.read(context)?.onPageLimitReached();
 
-          //если лемит я запускаю анимацию
-          if (IndexNotifierProvider.read(context)?.canAnimate ?? false) {
-            print('endPageReached');
-            activeControllerNotifier.value = 'switchPage';
+            return;
+          }
+
+          //если не лимит я прибавляю след сторис
+          if (!IndexNotifierProvider.read(context)?.isEndContentPage) {
+            IndexNotifierProvider.read(context)?.incrementStoryIndex();
+            animationController.forward(from: 0);
+            return;
+          }
+
+          //если лимит я переключаю страницу
+          if (IndexNotifierProvider.read(context)?.isEndContentPage) {
+            delayer('endPageReached', 1000);
+
+            animationController.stop();
+            delayer('stopped controller', 100);
+
+            print(
+                'я сейчас на странице ${IndexNotifierProvider.read(context)?.pageIndex ?? 0}');
+            IndexNotifierProvider.read(context)?.openNextPage();
+            delayer('я вызывал метод инхерит openNextPage', 100);
+
+              IndexNotifierProvider.read(context)?.visible(false,false);
+
+            await switchPageAnimation().then((_) {
+              animationController.forward(from: 0);
+              print('doneee');
+              print('_________________________________________');
+              IndexNotifierProvider.read(context)?.visible(true,true);
+            });
           }
         }
-      });
+      };
 
-  get listener => activeControllerNotifier.addListener(() {
-        if (activeControllerNotifier.value == 'switchPage') {
-          print('stopped controller');
-          animationController.stop();
-        } else {
-          animationController.forward();
-        }
-      });
+  switchPageAnimation() async {
+    var page = IndexNotifierProvider.read(context)?.pageIndex ?? 0;
 
-  Future<void> playAnimation() => animationController.isCompleted
-      ? animationController.reverse()
-      : animationController.forward();
+    delayer('animation __ перехожу на страницу $page', 500);
 
-  @override
-  void dispose() {
-    animationController.dispose();
-    super.dispose();
+    if (!mounted) {
+      print('animation __ $widget не прицеплен!!!!');
+      return; // Проверяем, все ли еще виджет находится в дереве виджетов
+    }
+
+    return pageController.animateToPage(
+      page,
+      duration: const Duration(milliseconds: 2500),
+      curve: Curves.easeIn,
+    );
   }
-}
-
-mixin PageControllerMixin<T extends StatefulWidget>
-    on SingleTickerProviderStateMixin<T> {
-  Duration get duration => _animationDuration;
-  Duration? get reverseDuration => null;
-  double get upperBound => 1.0;
-  double get lowerBound => 0.0;
-
-  late final pageController = PageController(
-    initialPage: IndexNotifierProvider.read(context)?.pageIndex ?? 0,
-  );
-
-  get listener => activeControllerNotifier.addListener(() {
-        final page = IndexNotifierProvider.read(context)?.pageIndex ?? 0;
-        if (activeControllerNotifier.value == 'switchPage') {
-          print('listed to page $page');
-          pageController.animateToPage(
-            page ,
-            duration: const Duration(milliseconds: 700),
-            curve: Curves.easeIn,
-          );
-        }
-      });
-
-  get logicSwicherListener => pageController.addListener(() {
-        if (!mounted)
-          return; // Проверяем, все ли еще виджет находится в дереве виджетов
-
-        if (pageController.page!.round() != pageController.page) {
-          // Перелистывание началось
-          // Останавливаем анимацию
-          activeControllerNotifier.value = 'switchPage';
-        } else {
-          // Перелистывание закончилось
-          activeControllerNotifier.value = 'noSwitchPage';
-          //
-          setState(() {});
-        }
-      });
 
   @override
   void dispose() {
     pageController.dispose();
+    animationController.dispose();
     super.dispose();
   }
 }

@@ -46,41 +46,45 @@ class HomeScreen extends StatelessWidget {
               StoriesCard(
                 imageSrc: 'images/s.png',
                 content: [
-                  'images/6.jpeg',
-                  'images/7.jpeg',
-                  'images/8.jpeg',
-                  'images/9.jpeg',
+
+                  'images/s.png',
+                  'images/18.jpeg',
+
+
+
+
                 ],
               ),
               StoriesCard(
                 imageSrc: 'images/16.jpeg',
                 content: [
+                  'images/16.jpeg',
                   'images/7.jpeg',
-                ],
+
+                                 ],
               ),
-              StoriesCard(
+              StoriesCard(  
                 imageSrc: 'images/_.jpeg',
                 content: [
-                  'images/12.jpeg',
-                ],
+                  'images/_.jpeg',
+                  'images/5.jpeg',                  ],
               ),
               StoriesCard(
                 imageSrc: 'images/croc.png',
                 content: [
-                  'images/18.jpeg',
-                  'images/17.jpeg',
-                  'images/14.jpeg',
-                  'images/21.jpeg',
-                  'images/19.jpeg',
-                  'images/8.jpeg',
-                ],
+
+                  'images/croc.png',
+                  'images/16.jpeg',                   ],
               ),
               StoriesCard(
                 imageSrc: 'images/stoneFace.jpeg',
                 content: [
-                  'images/13.jpeg',
-                  'images/10.jpeg',
-                  'images/14.jpeg',
+
+
+                  'images/stoneFace.jpeg',
+                  'images/11.jpeg',
+
+
                 ],
               ),
             ],
