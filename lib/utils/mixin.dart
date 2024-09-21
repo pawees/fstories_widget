@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:fstories_widget/_logging.dart';
 import 'package:fstories_widget/logic/inherited.dart';
-import 'package:fstories_widget/utils/delayer.dart';
 
 mixin ControllerMixin<T extends StatefulWidget>
     on SingleTickerProviderStateMixin<T> {
   //TODO: каким то образом прокинуть дюрацию для контроллера
 
-  late final pageController = PageController(initialPage: IndexNotifierProvider.read(context)?.pageIndex ?? 0 );
+  late final pageController = PageController(
+      initialPage: IndexNotifierProvider.read(context)?.pageIndex ?? 0);
 
   late final animationController = AnimationController(
     vsync: this,
@@ -15,53 +16,53 @@ mixin ControllerMixin<T extends StatefulWidget>
 
   get changeIndicatorListener => (status) async {
         if (status == AnimationStatus.completed) {
-          //если страницы кончились
+          //call callback if end page
           if (IndexNotifierProvider.read(context)?.isEndAllPages) {
             IndexNotifierProvider.read(context)?.onPageLimitReached();
-
             return;
           }
 
-          //если не лимит я прибавляю след сторис
+          //increment for next story
           if (!IndexNotifierProvider.read(context)?.isEndContentPage) {
             IndexNotifierProvider.read(context)?.incrementStoryIndex();
             animationController.forward(from: 0);
             return;
           }
 
-          //если лимит я переключаю страницу
+          //swich page animation [onPageAnimation] PageController
+          //increment page
           if (IndexNotifierProvider.read(context)?.isEndContentPage) {
-            delayer('endPageReached', 1000);
+            fStoriesLog.fine('end page reached');
 
             animationController.stop();
-            delayer('stopped controller', 100);
-
-            print(
-                'я сейчас на странице ${IndexNotifierProvider.read(context)?.pageIndex ?? 0}');
+            fStoriesLog.fine('stop indicator row animation');
+            fStoriesLog.fine(
+                'current page is ${IndexNotifierProvider.read(context)?.pageIndex ?? 0}');
             IndexNotifierProvider.read(context)?.openNextPage();
-            delayer('я вызывал метод инхерит openNextPage', 100);
+            IndexNotifierProvider.read(context)?.visible(false, false);
+            fStoriesLog.fine('indicator row is invisible');
 
-              IndexNotifierProvider.read(context)?.visible(false,false);
-
-            await switchPageAnimation().then((_) {
+            await _switchPageAnimation().then((_) {
               animationController.forward(from: 0);
-              print('doneee');
-              print('_________________________________________');
-              IndexNotifierProvider.read(context)?.visible(true,true);
+              fStoriesLog.fine('animation is done');
+
+
+              IndexNotifierProvider.read(context)?.visible(true, true);
+              fStoriesLog.fine('indicator row is visible back');
+              fStoriesLog.fine('_ _ _ _ _');
+
             });
           }
         }
       };
 
-  switchPageAnimation() async {
-    var page = IndexNotifierProvider.read(context)?.pageIndex ?? 0;
-
-    delayer('animation __ перехожу на страницу $page', 500);
+  _switchPageAnimation() async {
+    int page = IndexNotifierProvider.read(context)?.pageIndex ?? 0;
 
     if (!mounted) {
-      print('animation __ $widget не прицеплен!!!!');
-      return; // Проверяем, все ли еще виджет находится в дереве виджетов
+      return;
     }
+    fStoriesLog.fine('open up $page page');
 
     return pageController.animateToPage(
       page,
