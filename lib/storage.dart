@@ -1,4 +1,3 @@
-import 'package:fstories_widget/models/enums.dart';
 import 'package:fstories_widget/models/stories_card.dart';
 
 abstract class Storage<S> {
@@ -8,7 +7,6 @@ abstract class Storage<S> {
 
 Future<List<StoriesCard?>> compare(
     Storage storage, List<StoriesCard> cards, engine) async {
-  //TODO: проверить список в памяти на null...
 
   //получаем список карточек, которые у нас сохранены как просмотренные.
   Set<StoriesCard?> watchedCards = await storage.get('stroriescards', engine).then((cards) {
@@ -26,8 +24,6 @@ Future<List<StoriesCard?>> compare(
   List<StoriesCard?> nonMatching = [];
   List<StoriesCard?> matching = [];
 
-    List<int> nonMatching1 = [];
-  List<int> matching1 = [];
 
   
 

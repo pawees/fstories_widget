@@ -68,7 +68,7 @@ void main() {
     });
     test('find watched cards', () async {
       storage.set('stroriescards', list1, pref);
-      final fromRequest = const [
+      const fromRequest = [
         StoriesCard(
           imageSrc: 'images/fromRequest_new.png',
           content: [
@@ -84,7 +84,7 @@ void main() {
           ],
         )
       ];
-      debugPrint('${fromRequest.map((e) => e!.imageSrc).toList()}');
+      debugPrint('${fromRequest.map((e) => e.imageSrc).toList()}');
 
       var result = await compare(storage, list1, pref);
       final expectedList = [

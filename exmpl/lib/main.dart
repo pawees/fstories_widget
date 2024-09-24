@@ -40,7 +40,7 @@ class HomeScreen extends StatelessWidget {
           SizedBox(
             height: 75,
             child: StoryCardsView(
-              size: Size(75, 75),
+              size: const Size(75, 75),
               shape: Shape.circle,
               cards: [
                 StoriesCard(
