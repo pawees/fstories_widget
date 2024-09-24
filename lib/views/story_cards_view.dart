@@ -119,15 +119,15 @@ class _StoryCardsViewState extends State<StoryCardsView> {
                   },
                   storyCards: cards,
                   cardBorderDecor: widget.borderDecoration,
-                  state: cards[index]!.state,
+                  state: cards[index].state,
                   card: CardDecorationWidget(
                     shape: widget.shape,
                     size: widget.size,
-                    imageSrc: cards[index]!.imageSrc, //fix
+                    imageSrc: cards[index].imageSrc, //fix
                   ),
                   page: index,
-                  storyLength: cards[index]!.content.length,
-                  content: cards[index]!.content,
+                  storyLength: cards[index].content.length,
+                  content: cards[index].content,
                 ),
               ),
             ),

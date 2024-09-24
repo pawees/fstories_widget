@@ -1,32 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:fstories_widget/_logging.dart';
 import 'package:fstories_widget/models/enums.dart';
 import 'package:fstories_widget/models/stories_card.dart';
-import 'package:fstories_widget/utils/mixin.dart';
-
-typedef OnAnimatePage = void Function(int, AnimationController);
 
 class IndexModel extends ChangeNotifier {
   IndexModel({
     required this.controller,
     required this.storyIndex,
     required this.pageIndex,
-    required this.onAnimatePage,
     required this.cards,
-    required this.onPageLimitReachedCallback,
-    this.isEnded = false,
   }) : _onCard = cards[pageIndex];
 
   final controller;
 
   int pageIndex;
   int storyIndex;
-  OnAnimatePage onAnimatePage;
-  bool isEnded;
 
   List<StoriesCard> cards;
   StoriesCard _onCard;
 
-  VoidCallback? onPageLimitReachedCallback;
 
   List<StoriesCard> _deleteIndexes = [];
 
@@ -34,9 +26,7 @@ class IndexModel extends ChangeNotifier {
 
   get currentStoryIndex => storyIndex >= storyLimit ? storyLimit : storyIndex;
 
-
   get currentPage => _onCard;
-
 
   get storyLimit => _onCard.content.length - 1;
 
@@ -47,6 +37,7 @@ class IndexModel extends ChangeNotifier {
   get pageLength => cards.length;
 
   get isEndContentPage => storyIndex == storyLimit;
+
   get isEndAllPages => pageIndex == pageLimit;
 
   void _modifyCardsList() {
@@ -60,12 +51,10 @@ class IndexModel extends ChangeNotifier {
     controller.sink.add(cards);
   }
 
-  visible(value,shouldNotify) {
+  visible(value, shouldNotify) {
     isRowVisible = value;
-    if(shouldNotify){
-    notifyListeners();
-
-
+    if (shouldNotify) {
+      notifyListeners();
     }
   }
 
@@ -79,9 +68,6 @@ class IndexModel extends ChangeNotifier {
   }
 
   incrementStoryIndex() {
-    //как пишут логи мастера посмотреть суперТекст
-    //print('Story limit: $storyLimit , Story index: $storyIndex');
-
     storyIndex += 1;
     notifyListeners();
   }
@@ -89,7 +75,7 @@ class IndexModel extends ChangeNotifier {
   onClose(
     VoidCallback? callback,
   ) {
-    print('tapped close button');
+    fStoriesLog.fine('tapped close button');
 
     _modifyCardsList();
     callback?.call();
@@ -99,11 +85,7 @@ class IndexModel extends ChangeNotifier {
     _markPageAsWatched();
 
     if (pageIndex == pageLimit) {
-
-     _modifyCardsList();
-
-      onPageLimitReachedCallback?.call();
-
+      _modifyCardsList();
       return;
     }
   }
@@ -112,22 +94,18 @@ class IndexModel extends ChangeNotifier {
     _deleteIndexes.add(_onCard);
   }
 
-
   openNextPage() async {
-
     _markPageAsWatched();
 
     pageIndex += 1;
 
     _onCard = cards[pageIndex];
-    
+
     storyIndex = 0;
 
-
-    //notifyListeners();
   }
 
-  _openPrevPage() {}
+
 }
 
 class IndexNotifierProvider extends InheritedNotifier<IndexModel> {

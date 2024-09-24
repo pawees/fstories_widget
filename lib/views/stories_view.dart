@@ -1,8 +1,9 @@
 library stories;
 
 import 'package:flutter/material.dart';
+import 'package:fstories_widget/_logging.dart';
 import 'package:fstories_widget/models/stories_card.dart';
-import 'package:fstories_widget/utils/mixin.dart';
+import 'package:fstories_widget/views/controller.dart';
 import 'package:fstories_widget/utils/safe.dart';
 import '../logic/inherited.dart';
 
@@ -31,38 +32,26 @@ class _StoriesViewStateF extends State<StoriesViewF> {
   Widget build(BuildContext context) {
     return IndexNotifierProvider(
       model: IndexModel(
-        onPageLimitReachedCallback: () {
-          Navigator.of(context).pop();
-        }, //под вопросом
         storyIndex: 0,
         cards: widget.cards,
         pageIndex: widget.cardIndex,
-        onAnimatePage: (index, controller) {
-          pageController?.animateToPage(
-            index,
-            duration: const Duration(milliseconds: 700),
-            curve: Curves.easeIn,
-          );
-        }, //под вопросом
-        isEnded: false,
         controller: widget.controller,
       ),
-      child: NewWidget(),
+      child: StoriesPageBuilder(),
     );
   }
 }
 
-//TODO: call this class StoriesPageBuilder!
-class NewWidget extends StatefulWidget {
-  const NewWidget({
+class StoriesPageBuilder extends StatefulWidget {
+  const StoriesPageBuilder({
     super.key,
   });
 
   @override
-  State<NewWidget> createState() => _NewWidgetState();
+  State<StoriesPageBuilder> createState() => _StoriesPageBuilderState();
 }
 
-class _NewWidgetState extends State<NewWidget>
+class _StoriesPageBuilderState extends State<StoriesPageBuilder>
     with SingleTickerProviderStateMixin, ControllerMixin {
   @override
   void initState() {
@@ -77,7 +66,7 @@ class _NewWidgetState extends State<NewWidget>
           controller: pageController,
           itemCount: IndexNotifierProvider.read(context)?.pageLength,
           itemBuilder: (context, index) {
-            return _StoriesViewBuilderF(
+            return Scene(
               animationCntroller: animationController,
             );
           }),
@@ -85,34 +74,27 @@ class _NewWidgetState extends State<NewWidget>
   }
 }
 
-class _StoriesViewBuilderF extends StatefulWidget {
-  _StoriesViewBuilderF({required this.animationCntroller, Key? key})
+class Scene extends StatefulWidget {
+  Scene({required this.animationCntroller, Key? key})
       : super(key: key);
 
   final AnimationController animationCntroller;
 
   @override
-  State<_StoriesViewBuilderF> createState() => _StoriesViewBuilderFState();
+  State<Scene> createState() => _SceneState();
 }
 
-//TODO: call this class Scene!
-class _StoriesViewBuilderFState extends State<_StoriesViewBuilderF>
+class _SceneState extends State<Scene>
     with SingleTickerProviderStateMixin {
   @override
   void initState() {
-    final hash = widget.hashCode;
-    print('scene заинитился $hash');
-    // widget.animationCntroller.reset();
-    // widget.animationCntroller.forward();
+    fStoriesLog.fine('scene create ${widget.hashCode}');
     super.initState();
   }
 
   @override
   void dispose() {
-    final hash = widget.hashCode;
-    print('scene задиспожен $hash');
-
-    //widget.animationCntroller.dispose();
+    fStoriesLog.fine('scene disposed ${widget.hashCode}');
     super.dispose();
   }
 
@@ -123,6 +105,7 @@ class _StoriesViewBuilderFState extends State<_StoriesViewBuilderF>
         color: Colors.black,
         child: Stack(
           children: [
+
             ///image
             Center(
               child: _Content(),
@@ -184,9 +167,8 @@ class _ContentState extends State<_Content>
   late int currentStoryIndex;
   late String src;
 
-    late int prevCurrentStoryIndex;
+  late int prevCurrentStoryIndex;
   late String prevSrc;
-
 
   @override
   void initState() {
@@ -199,36 +181,16 @@ class _ContentState extends State<_Content>
 
   @override
   void didChangeDependencies() {
-          currentStoryIndex =
-          IndexNotifierProvider.watch(context)?.currentStoryIndex ?? 0;
-      src = IndexNotifierProvider.read(context)
-          ?.currentPage
-          .content[currentStoryIndex];
+    currentStoryIndex =
+        IndexNotifierProvider.watch(context)?.currentStoryIndex ?? 0;
+    src = IndexNotifierProvider.read(context)
+        ?.currentPage
+        .content[currentStoryIndex];
     super.didChangeDependencies();
-    // bool visible = IndexNotifierProvider.watch(context)?.isRowVisible ?? true;
-    // if (visible) {
-    //   currentStoryIndex =
-    //       IndexNotifierProvider.watch(context)?.currentStoryIndex ?? 0;
-    //   src = IndexNotifierProvider.read(context)
-    //       ?.currentPage
-    //       .content[currentStoryIndex];
-
-
-    // }
-    // if (!visible) {
-    //   currentStoryIndex =
-    //       IndexNotifierProvider.watch(context)?.prevCurrentStoryIndex ?? 0;
-    //   src = IndexNotifierProvider.read(context)
-    //       ?.prevCurrentPage
-    //       .content[currentStoryIndex];
-    // }
   }
-
-
 
   @override
   Widget build(BuildContext context) {
-
     if (currentStoryIndex != 0) {
       _controller.reset();
       _controller.forward();
@@ -245,8 +207,6 @@ class _ContentState extends State<_Content>
       child: Image.asset(src),
     );
   }
-
-
 }
 
 class _Gestures extends StatelessWidget {

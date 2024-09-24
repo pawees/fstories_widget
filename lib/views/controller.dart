@@ -19,6 +19,7 @@ mixin ControllerMixin<T extends StatefulWidget>
           //call callback if end page
           if (IndexNotifierProvider.read(context)?.isEndAllPages) {
             IndexNotifierProvider.read(context)?.onPageLimitReached();
+            Navigator.of(context).pop();
             return;
           }
 
