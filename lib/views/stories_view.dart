@@ -284,7 +284,6 @@ class _IndicatorsRow extends StatefulWidget {
 
 class _IndicatorsRowState extends State<_IndicatorsRow>
     with SetStateAfterFrame {
-  //late Animation<double> indicatorAnimation;
   late int storyLength;
   late int currentStoryIndex;
 
