@@ -81,26 +81,26 @@ class HomeScreen extends StatelessWidget {
               ],
             ),
           ),
-          ElevatedButton(
-            onPressed: () {},
-            child: const Text('basics'),
-          ),
-          ElevatedButton(
-            onPressed: () {},
-            child: const Text('my_training_page'),
-          ),
-          ElevatedButton(
-            onPressed: () {},
-            child: const Text('animations out of the box'),
-          ),
-          ElevatedButton(
-            onPressed: () {},
-            child: const Text('complex'),
-          ),
-          ElevatedButton(
-            onPressed: () {},
-            child: const Text('tips'),
-          ),
+          // ElevatedButton(
+          //   onPressed: () {},
+          //   child: const Text('basics'),
+          // ),
+          // ElevatedButton(
+          //   onPressed: () {},
+          //   child: const Text('my_training_page'),
+          // ),
+          // ElevatedButton(
+          //   onPressed: () {},
+          //   child: const Text('animations out of the box'),
+          // ),
+          // ElevatedButton(
+          //   onPressed: () {},
+          //   child: const Text('complex'),
+          // ),
+          // ElevatedButton(
+          //   onPressed: () {},
+          //   child: const Text('tips'),
+          // ),
         ],
       ),
     );
